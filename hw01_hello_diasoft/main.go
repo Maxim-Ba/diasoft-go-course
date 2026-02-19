@@ -8,5 +8,6 @@ import (
 
 func main() {
 	baseStr := "Hello, DIASOFT!"
+
 	fmt.Println(reverse.String(baseStr))
 }
