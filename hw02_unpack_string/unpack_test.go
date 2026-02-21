@@ -4,7 +4,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/require" //nolint:depguard
 )
 
 func TestUnpack(t *testing.T) {
@@ -40,6 +40,27 @@ func TestUnpackInvalidString(t *testing.T) {
 		t.Run(tc, func(t *testing.T) {
 			_, err := Unpack(tc)
 			require.Truef(t, errors.Is(err, ErrInvalidString), "actual error %q", err)
+		})
+	}
+}
+
+func TestUnpuckUtf8Strung(t *testing.T) {
+	testCases := []struct {
+		name     string
+		input    string
+		expected string
+	}{
+		{"пробельные символы", "a\tb\nc", "a\tb\nc"},
+		{"кириллица", "Привет", "Привет"},
+		{"комбинирующие символы (буква + диакритика)", "a\u0301", "a\u0301"},
+		{"комбинирующие символы (буква + диакритика) с повтором", "a\u03012", "a\u0301\u0301"},
+		{"простой смайлик (одна руна)", "😊", "😊"},
+		{"простой смайлик (одна руна) с повтором", "😊7", "😊😊😊😊😊😊😊"},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			result, _ := Unpack(tc.input)
+			require.Equal(t, tc.expected, result)
 		})
 	}
 }
