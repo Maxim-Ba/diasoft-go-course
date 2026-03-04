@@ -80,3 +80,37 @@ func TestTop10(t *testing.T) {
 		}
 	})
 }
+
+func TestCreatedSortedKeys(t *testing.T) {
+	testCases := []struct {
+		Name     string
+		Input    map[string]int
+		Expected []string
+	}{
+		{
+			Name: "simple case",
+			Input: map[string]int{
+				"a": 100,
+				"b": 1000,
+				"c": 500,
+				"d": 1000,
+			},
+			Expected: []string{"b", "d", "c", "a"},
+		},
+		{
+			Name: "all values eq",
+			Input: map[string]int{
+				"d": 100,
+				"a": 100,
+				"c": 100,
+				"b": 100,
+			},
+			Expected: []string{"a", "b", "c", "d"},
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.Name, func(t *testing.T) {
+			require.Equal(t, tc.Expected, createdSortedKeys(tc.Input))
+		})
+	}
+}
