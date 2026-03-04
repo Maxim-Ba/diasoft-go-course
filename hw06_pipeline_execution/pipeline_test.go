@@ -91,3 +91,12 @@ func TestPipeline(t *testing.T) {
 		require.Less(t, int64(elapsed), int64(abortDur)+int64(fault))
 	})
 }
+
+func TestFanInWithFirstDone(t *testing.T) {
+	t.Run("Empty chanels", func(t *testing.T) {
+		out := fanInWithFirstDone()
+
+		_, ok := <-out
+		require.False(t, ok, "Канал должен быть закрыт")
+	})
+}
