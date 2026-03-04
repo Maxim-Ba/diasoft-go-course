@@ -1,0 +1,21 @@
+linters:
+  disable:
+    - exportloopref
+  enable:
+    - copyloopvar
+
+linters-settings:
+  depguard:
+    rules:
+      Test:
+        files:
+          - '*_test.go'
+        allow:
+          - $gostd
+          - github.com/stretchr/testify/require
+      Main:
+        files:
+          - '!*_test.go'
+        allow:
+          - $gostd
+         
