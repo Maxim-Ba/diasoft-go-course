@@ -49,3 +49,49 @@ func TestList(t *testing.T) {
 		require.Equal(t, []int{70, 80, 60, 40, 10, 30, 50}, elems)
 	})
 }
+
+func TestRemoveLastElem(t *testing.T) {
+	t.Run("remove last item (only one item exist)", func(t *testing.T) {
+		l := NewList()
+
+		l.PushFront(10) // [10]
+		i := l.Front()
+		l.Remove(i)
+		elems := make([]int, 0, l.Len())
+		for i := l.Front(); i != nil; i = i.Next {
+			elems = append(elems, i.Value.(int))
+		}
+		require.Equal(t, []int{}, elems)
+	})
+}
+
+func TestRemoveTailAndHead(t *testing.T) {
+	t.Run("remove first", func(t *testing.T) {
+		l := NewList()
+
+		l.PushFront(20) // [20]
+		l.PushFront(10) // [20, 10]
+		i := l.Front()
+		l.Remove(i)
+
+		elems := make([]int, 0, l.Len())
+		for i := l.Front(); i != nil; i = i.Next {
+			elems = append(elems, i.Value.(int))
+		}
+		require.Equal(t, []int{20}, elems)
+	})
+	t.Run("remove last", func(t *testing.T) {
+		l := NewList()
+
+		l.PushFront(20) // [20]
+		l.PushFront(10) // [20, 10]
+		i := l.Back()
+		l.Remove(i)
+
+		elems := make([]int, 0, l.Len())
+		for i := l.Front(); i != nil; i = i.Next {
+			elems = append(elems, i.Value.(int))
+		}
+		require.Equal(t, []int{10}, elems)
+	})
+}
