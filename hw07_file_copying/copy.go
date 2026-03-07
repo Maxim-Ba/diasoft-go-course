@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"io"
 	"os"
+
+	"github.com/cheggaaa/pb/v3"
 )
 
 var (
@@ -18,8 +20,15 @@ func Copy(fromPath, toPath string, offset, limit int64) error {
 		return err
 	}
 	defer fr.Close()
-	// TODO fileInfo.Mode().IsRegular()
+
+	err = checkFileMode(fr)
+	if err != nil {
+		return err
+	}
 	err = checkOffset(offset, fr)
+	if err != nil {
+		return err
+	}
 	limit, err = checkAndSetLimit(limit, fr)
 	if err != nil {
 		return err
@@ -35,12 +44,33 @@ func Copy(fromPath, toPath string, offset, limit int64) error {
 		return fmt.Errorf("error Seek: %w", err)
 	}
 	limitedReader := io.LimitReader(fr, limit)
+	total := limit
+	if total == 0 {
+		fi, _ := fr.Stat()
+		total = fi.Size() - offset
+	}
+	bar := pb.StartNew(int(total))
+	bar.Set(pb.Bytes, true) // отображать в байтах
+	defer bar.Finish()
 
-	_, err = io.Copy(fw, limitedReader)
+	progressReader := bar.NewProxyReader(limitedReader)
+	_, err = io.Copy(fw, progressReader)
 	if err != nil {
 		return fmt.Errorf("error on copy: %w", err)
 	}
+
 	return nil
+}
+
+func checkFileMode(f *os.File) error {
+	fileInfo, err := f.Stat()
+	if err != nil {
+		return err
+	}
+	if fileInfo.Mode().IsRegular() {
+		return nil
+	}
+	return ErrUnsupportedFile
 }
 
 func checkOffset(offset int64, f *os.File) error {
