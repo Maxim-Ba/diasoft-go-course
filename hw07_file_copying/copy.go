@@ -15,7 +15,7 @@ var (
 )
 
 func Copy(fromPath, toPath string, offset, limit int64) error {
-	fr, err := os.OpenFile(fromPath, os.O_RDONLY, 0666)
+	fr, err := os.OpenFile(fromPath, os.O_RDONLY, 0o666)
 	if err != nil {
 		return err
 	}
