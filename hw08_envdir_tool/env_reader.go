@@ -5,10 +5,11 @@ import (
 	"bytes"
 	"errors"
 	"os"
+	"path/filepath"
 	"strings"
 )
 
-var WrongFileName = errors.New("name contains forbiden symbol: =")
+var ErrWrongFileName = errors.New("name contains forbidden symbol: =")
 
 type Environment map[string]EnvValue
 
@@ -31,7 +32,8 @@ func ReadDir(dir string) (Environment, error) {
 		if err != nil {
 			return nil, err
 		}
-		err = checkFileName(info.Name())
+		name := info.Name()
+		err = checkFileName(name)
 		if err != nil {
 			return nil, err
 		}
@@ -40,11 +42,11 @@ func ReadDir(dir string) (Environment, error) {
 		}
 		needRemove := info.Size() == 0
 
-		v, err := getValue(info.Name())
+		v, err := getValue(filepath.Join(dir, name))
 		if err != nil {
 			return nil, err
 		}
-		envs[info.Name()] = EnvValue{
+		envs[name] = EnvValue{
 			Value:      v,
 			NeedRemove: needRemove,
 		}
@@ -54,7 +56,7 @@ func ReadDir(dir string) (Environment, error) {
 
 func checkFileName(fileName string) error {
 	if strings.Contains(fileName, "=") {
-		return WrongFileName
+		return ErrWrongFileName
 	}
 	return nil
 }
@@ -75,7 +77,7 @@ func getValue(fileName string) (string, error) {
 
 	// Удаляем символ новой строки
 	if len(line) > 0 {
-		runes := []rune(string(line))
+		runes := []rune(line)
 		lastRune := runes[len(runes)-1:]
 		if string(lastRune) == "\n" {
 			line = line[:len(line)-1]

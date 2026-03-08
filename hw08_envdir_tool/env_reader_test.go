@@ -12,7 +12,7 @@ import (
 func TestCheckFileName(t *testing.T) {
 	t.Run("name contains =", func(t *testing.T) {
 		err := checkFileName("dsfsdfsdf=sdfsdfsdfsdf")
-		require.ErrorIs(t, err, WrongFileName)
+		require.ErrorIs(t, err, ErrWrongFileName)
 	})
 	t.Run("name not contains =", func(t *testing.T) {
 		err := checkFileName("dsfsdfsdf+sdfsdfsdfsdf")
