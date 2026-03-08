@@ -44,7 +44,7 @@ func RunCmd(cmd []string, env Environment) int {
 		envSlice = append(envSlice, k+"="+v)
 	}
 
-	c := exec.Command(cmd[0], cmd[1:]...)
+	c := exec.Command(cmd[0], cmd[1:]...) // #nosec
 
 	c.Env = envSlice
 
