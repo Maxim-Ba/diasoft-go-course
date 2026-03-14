@@ -91,42 +91,45 @@ var intValidators = map[string]ValidatorFunc{
 
 // разбивает тег на отдельные правила.
 func splitRules(tag string) []string {
-	parts := strings.Split(tag, "|")
-	var result []string
-	for _, part := range parts {
+	var rules []string
+	// сначала разделим по вертикальной черте
+	for _, part := range strings.Split(tag, "|") {
 		part = strings.TrimSpace(part)
 		if part == "" {
 			continue
 		}
-		// Ищем запятые, которые являются разделителями правил
-		var subParts []string
-		start := 0
-		for i := 0; i < len(part); i++ {
-			if part[i] == ',' {
-				// Пропускаем пробелы после запятой
-				j := i + 1
-				for j < len(part) && part[j] == ' ' {
-					j++
-				}
-				// Ищем конец следующего слова (имени валидатора)
-				k := j
-				for k < len(part) && (part[k] >= 'a' && part[k] <= 'z' || part[k] >= 'A' && part[k] <= 'Z') {
-					k++
-				}
-				// Если после слова идёт двоеточие, значит это новое правило
-				if k < len(part) && part[k] == ':' {
-					subParts = append(subParts, strings.TrimSpace(part[start:i]))
-					start = i + 1
-				}
-				// Иначе запятая внутри параметра, ничего не делаем
-			}
-		}
-		if start < len(part) {
-			subParts = append(subParts, strings.TrimSpace(part[start:]))
-		}
-		result = append(result, subParts...)
+		rules = append(rules, splitPart(part)...)
 	}
-	return result
+	return rules
+}
+
+func splitPart(part string) []string {
+	var rules []string
+	start := 0
+	for i := 0; i < len(part); i++ {
+		if part[i] == ',' && isRuleSeparator(part, i) {
+			rules = append(rules, strings.TrimSpace(part[start:i]))
+			start = i + 1
+		}
+	}
+	if start < len(part) {
+		rules = append(rules, strings.TrimSpace(part[start:]))
+	}
+	return rules
+}
+
+func isRuleSeparator(s string, commaPos int) bool {
+	// пропускаем пробелы после запятой
+	j := commaPos + 1
+	for j < len(s) && s[j] == ' ' {
+		j++
+	}
+	k := j
+	for k < len(s) && (s[k] >= 'a' && s[k] <= 'z' || s[k] >= 'A' && s[k] <= 'Z') {
+		k++
+	}
+	// если после имени идёт двоеточие — это новый валидатор
+	return k < len(s) && s[k] == ':'
 }
 
 // validateField применяет все правила из тега к одному полю.
@@ -140,7 +143,7 @@ func validateField(fieldName string, value reflect.Value, tag string) (Validatio
 		}
 
 		// определяем тип поля
-		switch value.Kind() {
+		switch value.Kind() { //nolint:exhaustive
 		case reflect.String:
 			errs, progErr := applyStringValidator(fieldName, value.String(), rule)
 			if progErr != nil {
@@ -207,7 +210,7 @@ func validateSliceField(fieldName string, sliceValue reflect.Value, rule string)
 		elem := sliceValue.Index(i)
 		elemName := fmt.Sprintf("%s[%d]", fieldName, i)
 
-		switch elem.Kind() {
+		switch elem.Kind() { //nolint:exhaustive
 		case reflect.String:
 			errs, progErr := applyStringValidator(elemName, elem.String(), rule)
 			if progErr != nil {
