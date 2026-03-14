@@ -170,7 +170,7 @@ func validateField(fieldName string, value reflect.Value, tag string) (Validatio
 	return fieldErrors, nil
 }
 
-//  применяет один валидатор к строковому значению.
+// применяет один валидатор к строковому значению.
 func applyStringValidator(fieldName, strValue, rule string) (ValidationErrors, error) {
 	validatorName, param := parseRule(rule)
 	if validatorName == "" {
@@ -186,7 +186,7 @@ func applyStringValidator(fieldName, strValue, rule string) (ValidationErrors, e
 	return validator(fieldName, strValue, param)
 }
 
-//  применяет один валидатор к целочисленному значению.
+// применяет один валидатор к целочисленному значению.
 func applyIntValidator(fieldName string, intValue int64, rule string) (ValidationErrors, error) {
 	validatorName, param := parseRule(rule)
 	if validatorName == "" {
