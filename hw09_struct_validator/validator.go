@@ -89,7 +89,7 @@ var intValidators = map[string]ValidatorFunc{
 	"in":  validateIntIn,
 }
 
-// разбивает тег на отдельные правила
+// разбивает тег на отдельные правила.
 func splitRules(tag string) []string {
 	parts := strings.Split(tag, "|")
 	var result []string
@@ -221,7 +221,6 @@ func validateSliceField(fieldName string, sliceValue reflect.Value, rule string)
 				return nil, progErr
 			}
 			allErrors = append(allErrors, errs...)
-
 		default:
 			// Игнорируем
 		}
@@ -249,7 +248,8 @@ func validateStringLen(fieldName string, value interface{}, param string) (Valid
 		return nil, fmt.Errorf("некорректный параметр len %q для поля %s: %w", param, fieldName, err)
 	}
 	if len(str) != length {
-		return ValidationErrors{{Field: fieldName, Err: fmt.Errorf("длина должна быть равна %d", length)}}, nil
+		Err := fmt.Errorf("длина должна быть равна %d", length)
+		return ValidationErrors{{Field: fieldName, Err: Err}}, nil
 	}
 	return nil, nil
 }
@@ -264,7 +264,8 @@ func validateStringRegexp(fieldName string, value interface{}, param string) (Va
 		return nil, fmt.Errorf("некорректное регулярное выражение %q для поля %s: %w", param, fieldName, err)
 	}
 	if !re.MatchString(str) {
-		return ValidationErrors{{Field: fieldName, Err: fmt.Errorf("строка должна соответствовать регулярному выражению %q", param)}}, nil
+		Err := fmt.Errorf("строка должна соответствовать регулярному выражению %q", param)
+		return ValidationErrors{{Field: fieldName, Err: Err}}, nil
 	}
 	return nil, nil
 }
@@ -286,7 +287,8 @@ func validateStringIn(fieldName string, value interface{}, param string) (Valida
 		}
 	}
 	if !found {
-		return ValidationErrors{{Field: fieldName, Err: fmt.Errorf("значение должно быть одним из [%s]", strings.Join(allowed, ", "))}}, nil
+		Err := fmt.Errorf("значение должно быть одним из [%s]", strings.Join(allowed, ", "))
+		return ValidationErrors{{Field: fieldName, Err: Err}}, nil
 	}
 	return nil, nil
 }
@@ -351,7 +353,8 @@ func validateIntIn(fieldName string, value interface{}, param string) (Validatio
 		for i, a := range allowed {
 			allowedStrs[i] = strconv.FormatInt(a, 10)
 		}
-		return ValidationErrors{{Field: fieldName, Err: fmt.Errorf("значение должно быть одним из [%s]", strings.Join(allowedStrs, ", "))}}, nil
+		Err := fmt.Errorf("значение должно быть одним из [%s]", strings.Join(allowedStrs, ", "))
+		return ValidationErrors{{Field: fieldName, Err: Err}}, nil
 	}
 	return nil, nil
 }
