@@ -2,7 +2,8 @@ package hw09structvalidator
 
 import (
 	"encoding/json"
-	"fmt"
+	"errors"
+	"strings"
 	"testing"
 )
 
@@ -40,21 +41,123 @@ func TestValidate(t *testing.T) {
 	tests := []struct {
 		in          interface{}
 		expectedErr error
+		name        string
 	}{
 		{
-			// Place your code here.
+			name: "valid user",
+			in: User{
+				ID:     "123456789012345678901234567890123456",
+				Name:   "John",
+				Age:    30,
+				Email:  "john@example.com",
+				Role:   "admin",
+				Phones: []string{"12345678901", "10987654321"},
+			},
+			expectedErr: nil,
 		},
-		// ...
-		// Place your code here.
+		{
+			name: "valid app",
+			in: App{
+				Version: "1.2.3",
+			},
+			expectedErr: nil,
+		},
+		{
+			name: "token without tags - should be valid",
+			in: Token{
+				Header:    []byte("header"),
+				Payload:   []byte("payload"),
+				Signature: []byte("signature"),
+			},
+			expectedErr: nil,
+		},
+		{
+			name: "valid response",
+			in: Response{
+				Code: 200,
+				Body: "OK",
+			},
+			expectedErr: nil,
+		},
+		{
+			name: "int min and max combination",
+			in: struct {
+				Value int `validate:"min:10|max:20"`
+			}{Value: 15},
+			expectedErr: nil,
+		},
+		{
+			name: "string with multiple rules via comma",
+			in: struct {
+				Name string `validate:"len:5,in:qwert,qwer"`
+			}{Name: "qwert"},
+			expectedErr: nil,
+		},
+		{
+			name: "struct with unexported field only",
+			in: struct {
+				noexported string `validate:"len:5"`
+			}{noexported: "12345"},
+			expectedErr: nil,
+		},
+		{
+			name: "tag with -",
+			in: struct {
+				Field string `validate:"-"`
+			}{Field: "any"},
+			expectedErr: nil,
+		},
+		{
+			name: "empty tag",
+			in: struct {
+				Field string `validate:""`
+			}{Field: "any"},
+			expectedErr: nil,
+		},
+		{
+			name: "programmatic error - invalid in parameter for int",
+			in: struct {
+				Field int `validate:"in:1,two,3"`
+			}{Field: 1},
+			expectedErr: errors.New("некорректное число в списке in"),
+		},
+		{
+			name: "unknown validator for string",
+			in: struct {
+				Field string `validate:"unknown:xxx"`
+			}{Field: "test"},
+			expectedErr: errors.New("неизвестный валидатор для строки"),
+		},
+		{
+			name: "unknown validator for int",
+			in: struct {
+				Field int `validate:"unknown:10"`
+			}{Field: 5},
+			expectedErr: errors.New("неизвестный валидатор для числа"),
+		},
 	}
 
-	for i, tt := range tests {
-		t.Run(fmt.Sprintf("case %d", i), func(t *testing.T) {
-			tt := tt
-			t.Parallel()
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := Validate(tt.in)
 
-			// Place your code here.
-			_ = tt
+			if tt.expectedErr == nil {
+				if err != nil {
+					t.Errorf("expected no error, got %v", err)
+				}
+				return
+			}
+
+			if err == nil {
+				t.Fatal("expected error, got nil")
+			}
+			var valErrs ValidationErrors
+			if errors.As(err, &valErrs) {
+				t.Fatalf("expected programmatic error, got ValidationErrors: %v", valErrs)
+			}
+			if tt.expectedErr != nil && !strings.Contains(err.Error(), tt.expectedErr.Error()) {
+				t.Errorf("expected error containing %q, got %q", tt.expectedErr.Error(), err.Error())
+			}
 		})
 	}
 }
