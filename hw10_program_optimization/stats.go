@@ -49,17 +49,17 @@ func getUsers(r io.Reader) (result users, err error) {
 
 func countDomains(u users, domain string) (DomainStat, error) {
 	result := make(DomainStat)
-
+	// 1 компиляция regexp
+	re, err := regexp.Compile(`\.` + domain)
+	if err != nil {
+		return nil, err
+	}
 	for _, user := range u {
-		matched, err := regexp.Match("\\."+domain, []byte(user.Email))
-		if err != nil {
-			return nil, err
-		}
+		matched := re.MatchString(user.Email)
 
 		if matched {
-			num := result[strings.ToLower(strings.SplitN(user.Email, "@", 2)[1])]
-			num++
-			result[strings.ToLower(strings.SplitN(user.Email, "@", 2)[1])] = num
+			domainPart := strings.ToLower(strings.SplitN(user.Email, "@", 2)[1])
+			result[domainPart]++ // Вместо двух вызовов
 		}
 	}
 	return result, nil
