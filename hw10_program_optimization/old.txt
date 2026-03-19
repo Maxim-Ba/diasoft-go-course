@@ -1,0 +1,7 @@
+goos: linux
+goarch: amd64
+pkg: github.com/fixme_my_friend/hw10_program_optimization
+cpu: AMD Ryzen 9 9950X 16-Core Processor            
+BenchmarkGetDomainStat-32    	      20	  59228710 ns/op	156857016 B/op	 1700093 allocs/op
+PASS
+ok  	github.com/fixme_my_friend/hw10_program_optimization	1.494s
