@@ -14,6 +14,7 @@ import (
 
 type initVals struct {
 	timeout *time.Duration
+
 	address string
 }
 
@@ -25,21 +26,28 @@ func main() {
 	if err := client.Connect(); err != nil {
 		log.Fatalf("Failed to connect: %v", err)
 	}
+
 	defer client.Close()
 
 	fmt.Fprintf(os.Stderr, "connected to %s ...\n", values.address)
 
 	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT)
+
 	defer cancel()
 
 	sendDone := make(chan error, 1)
+
 	receiveDone := make(chan error, 1)
+
 	go send(client, sendDone)
+
 	go receive(client, receiveDone)
 
 	select {
 	case <-ctx.Done():
+
 		// Ctrl+C
+
 		fmt.Fprintln(os.Stderr, "...Interrupted")
 	case err := <-sendDone:
 		// EOF || err
@@ -59,6 +67,7 @@ func main() {
 
 func getValuesFromFlags() initVals {
 	timeout := flag.Duration("timeout", 10*time.Second, "connection timeout")
+
 	flag.Parse()
 
 	if flag.NArg() != 2 {
@@ -66,10 +75,14 @@ func getValuesFromFlags() initVals {
 	}
 
 	host := flag.Arg(0)
+
 	port := flag.Arg(1)
+
 	address := net.JoinHostPort(host, port)
+
 	return initVals{
 		address: address,
+
 		timeout: timeout,
 	}
 }
@@ -79,6 +92,7 @@ func send(client TelnetClient, sendDone chan error) {
 		err := client.Send()
 		if err != nil {
 			sendDone <- err
+
 			return
 		}
 	}
@@ -89,6 +103,7 @@ func receive(client TelnetClient, receiveDone chan error) {
 		err := client.Receive()
 		if err != nil {
 			receiveDone <- err
+
 			return
 		}
 	}
