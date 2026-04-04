@@ -8,10 +8,11 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/github.com/Maxim-Ba/hw12_13_14_15_calendar/internal/app"
-	"github.com/github.com/Maxim-Ba/hw12_13_14_15_calendar/internal/logger"
-	internalhttp "github.com/github.com/Maxim-Ba/hw12_13_14_15_calendar/internal/server/http"
-	memorystorage "github.com/github.com/Maxim-Ba/hw12_13_14_15_calendar/internal/storage/memory"
+	"github.com/Maxim-Ba/hw12_13_14_15_calendar/internal/app"
+	"github.com/Maxim-Ba/hw12_13_14_15_calendar/internal/logger"
+	internalhttp "github.com/Maxim-Ba/hw12_13_14_15_calendar/internal/server/http"
+	memorystorage "github.com/Maxim-Ba/hw12_13_14_15_calendar/internal/storage/memory"
+	sqlstorage "github.com/Maxim-Ba/hw12_13_14_15_calendar/internal/storage/sql"
 )
 
 var configFile string
@@ -36,7 +37,32 @@ func main() {
 
 	logg := logger.New(config.Logger.Level)
 
-	storage := memorystorage.New()
+	var storage interface {
+		app.Storage
+	}
+
+	switch config.Storage.Type {
+	case "memory":
+		logg.Info("using in-memory storage")
+		storage = memorystorage.New()
+	case "sql":
+		logg.Info("using SQL storage")
+		logg.Info("connecting to database: " + config.Database.DSN)
+
+		sqlStorage, err := sqlstorage.New(config.Database.DSN)
+		if err != nil {
+			logg.Error("failed to create SQL storage: " + err.Error())
+			os.Exit(1)
+		}
+		defer sqlStorage.Close()
+
+		logg.Info("database migrations applied successfully")
+		storage = sqlStorage
+	default:
+		logg.Error("unknown storage type: " + config.Storage.Type)
+		os.Exit(1)
+	}
+
 	calendar := app.New(logg, storage)
 
 	server := internalhttp.NewServer(logg, calendar)
