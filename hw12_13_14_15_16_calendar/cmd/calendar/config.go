@@ -17,7 +17,8 @@ type Config struct {
 }
 
 type LoggerConf struct {
-	Level string `mapstructure:"level"`
+	Level       string `mapstructure:"level"`
+	HTTPLogFile string `mapstructure:"http_log_file"`
 }
 
 type ServerConf struct {

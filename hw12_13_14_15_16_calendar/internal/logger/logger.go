@@ -115,3 +115,21 @@ func (l *Logger) Errorf(format string, args ...interface{}) {
 		l.errorLog.Printf(format, args...)
 	}
 }
+
+func NewFileLogger(level string, filepath string) (*Logger, error) {
+	file, err := os.OpenFile(filepath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0o666)
+	if err != nil {
+		return nil, err
+	}
+
+	parsedLevel := parseLevel(level)
+	flags := log.Ldate | log.Ltime | log.Lmicroseconds
+
+	return &Logger{
+		level:    parsedLevel,
+		debugLog: log.New(file, "DEBUG: ", flags),
+		infoLog:  log.New(file, "INFO: ", flags),
+		warnLog:  log.New(file, "WARN: ", flags),
+		errorLog: log.New(file, "ERROR: ", flags),
+	}, nil
+}

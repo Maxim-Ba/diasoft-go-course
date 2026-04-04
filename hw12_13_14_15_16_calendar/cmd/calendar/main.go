@@ -37,6 +37,12 @@ func main() {
 
 	logg := logger.New(config.Logger.Level)
 
+	httpLogger, err := logger.NewFileLogger("INFO", config.Logger.HTTPLogFile)
+	if err != nil {
+		logg.Error("failed to create HTTP logger: " + err.Error())
+		os.Exit(1)
+	}
+
 	var storage interface {
 		app.Storage
 	}
@@ -65,7 +71,7 @@ func main() {
 
 	calendar := app.New(logg, storage)
 
-	server := internalhttp.NewServer(logg, calendar)
+	server := internalhttp.NewServer(logg, httpLogger, calendar, config.Server.Host, config.Server.Port)
 
 	ctx, cancel := signal.NotifyContext(context.Background(),
 		syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)

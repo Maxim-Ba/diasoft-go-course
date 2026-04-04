@@ -1,9 +1,10 @@
 logger:
   level: "INFO"
+  http_log_file: "logs/http.log"
 
 server:
   host: "localhost"
-  port: "8080"
+  port: "8082"
 
 database:
   dsn: "postgres://calendar:calendar@localhost:5432/calendar?sslmode=disable"
