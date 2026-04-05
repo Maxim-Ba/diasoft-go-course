@@ -26,8 +26,7 @@ test:
 	go test -race ./internal/...
 
 install-lint-deps:
-	GOROOT=$(shell go env GOROOT)
-	(which golangci-lint > /dev/null) || curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(shell go env GOPATH)/bin v1.57.2
+	(which golangci-lint > /dev/null) || curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(shell go env GOPATH)/bin v1.62.0
 
 deps:
 	go mod download
