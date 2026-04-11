@@ -1,0 +1,307 @@
+openapi: "3.0.3"
+info:
+  title: Calendar API
+  description: REST API для сервиса «Календарь»
+  version: "1.0.0"
+
+servers:
+  - url: http://localhost:8082
+    description: Local development server
+
+paths:
+  /events:
+    post:
+      summary: Создать событие
+      operationId: createEvent
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EventInput'
+      responses:
+        '201':
+          description: Событие создано
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventResponse'
+        '400':
+          description: Некорректные данные запроса
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Время занято другим событием
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /events/{id}:
+    put:
+      summary: Обновить событие
+      operationId: updateEvent
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EventInput'
+      responses:
+        '200':
+          description: Событие обновлено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventResponse'
+        '400':
+          description: Некорректные данные запроса
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Событие не найдено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Время занято другим событием
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    delete:
+      summary: Удалить событие
+      operationId: deleteEvent
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Событие удалено
+        '404':
+          description: Событие не найдено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /events/day:
+    get:
+      summary: Список событий на день
+      operationId: getEventsForDay
+      parameters:
+        - name: date
+          in: query
+          required: true
+          description: Дата в формате YYYY-MM-DD
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Список событий
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventListResponse'
+        '400':
+          description: Некорректный формат даты
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /events/week:
+    get:
+      summary: Список событий на неделю
+      operationId: getEventsForWeek
+      parameters:
+        - name: date
+          in: query
+          required: true
+          description: Дата начала недели в формате YYYY-MM-DD
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Список событий
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventListResponse'
+        '400':
+          description: Некорректный формат даты
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /events/month:
+    get:
+      summary: Список событий на месяц
+      operationId: getEventsForMonth
+      parameters:
+        - name: date
+          in: query
+          required: true
+          description: Дата начала месяца в формате YYYY-MM-DD
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Список событий
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventListResponse'
+        '400':
+          description: Некорректный формат даты
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    EventInput:
+      type: object
+      required:
+        - title
+        - startTime
+        - duration
+        - userId
+      properties:
+        title:
+          type: string
+          description: Заголовок события
+          minLength: 1
+        startTime:
+          type: string
+          format: date-time
+          description: Дата и время начала события (RFC3339)
+        duration:
+          type: integer
+          format: int64
+          description: Длительность события в секундах
+          minimum: 1
+        description:
+          type: string
+          description: Описание события (опционально)
+        userId:
+          type: string
+          description: ID пользователя-владельца события
+          minLength: 1
+        notificationTime:
+          type: integer
+          format: int64
+          description: За сколько секунд до события отправлять уведомление (опционально)
+          minimum: 0
+
+    EventResponse:
+      type: object
+      required:
+        - id
+        - title
+        - startTime
+        - duration
+        - userId
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Уникальный идентификатор события
+        title:
+          type: string
+          description: Заголовок события
+        startTime:
+          type: string
+          format: date-time
+          description: Дата и время начала события
+        duration:
+          type: integer
+          format: int64
+          description: Длительность события в секундах
+        description:
+          type: string
+          description: Описание события
+        userId:
+          type: string
+          description: ID пользователя-владельца события
+        notificationTime:
+          type: integer
+          format: int64
+          description: За сколько секунд до события отправлять уведомление
+
+    EventListResponse:
+      type: object
+      required:
+        - events
+      properties:
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/EventResponse'
+
+    ErrorResponse:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+          description: Описание ошибки
