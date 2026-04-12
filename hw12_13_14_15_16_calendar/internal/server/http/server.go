@@ -4,6 +4,7 @@ import (
 	"context"
 	"net"
 	"net/http"
+	"time"
 
 	"github.com/Maxim-Ba/hw12_13_14_15_calendar/internal/server/http/handlers"
 	"github.com/Maxim-Ba/hw12_13_14_15_calendar/internal/server/http/router"
@@ -39,8 +40,9 @@ func (s *Server) Start(ctx context.Context) error {
 	handler := router.NewRouter(s.httpLogger, s.app)
 
 	s.httpServer = &http.Server{
-		Addr:    s.address,
-		Handler: handler,
+		Addr:              s.address,
+		Handler:           handler,
+		ReadHeaderTimeout: 5 * time.Second,
 	}
 
 	s.logger.Info("starting HTTP server on " + s.address)

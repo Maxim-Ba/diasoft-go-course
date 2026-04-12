@@ -58,15 +58,20 @@ func main() {
 		sqlStorage, err := sqlstorage.New(config.Database.DSN)
 		if err != nil {
 			logg.Error("failed to create SQL storage: " + err.Error())
-			os.Exit(1)
+			panic("failed to create SQL storage: " + err.Error())
 		}
-		defer sqlStorage.Close()
+		defer func() {
+			err := sqlStorage.Close()
+			if err != nil {
+				logg.Error("failed to close SQL storage: " + err.Error())
+			}
+		}()
 
 		logg.Info("database migrations applied successfully")
 		storage = sqlStorage
 	default:
 		logg.Error("unknown storage type: " + config.Storage.Type)
-		os.Exit(1)
+		panic("unknown storage type: " + config.Storage.Type)
 	}
 
 	calendar := app.New(logg, storage)

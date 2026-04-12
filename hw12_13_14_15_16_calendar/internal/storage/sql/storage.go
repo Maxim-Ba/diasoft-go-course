@@ -34,7 +34,10 @@ func New(dsn string) (*Storage, error) {
 	}
 
 	if err := RunMigrations(db.DB); err != nil {
-		db.Close()
+		err := db.Close()
+		if err != nil {
+			return nil, fmt.Errorf("failed to close database: %w", err)
+		}
 		return nil, fmt.Errorf("failed to run migrations: %w", err)
 	}
 
