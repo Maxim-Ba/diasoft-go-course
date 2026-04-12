@@ -1,8 +1,10 @@
 package router
 
 import (
+	"encoding/json"
 	"net/http"
 
+	"github.com/Maxim-Ba/hw12_13_14_15_calendar/internal/server/http/generated"
 	"github.com/Maxim-Ba/hw12_13_14_15_calendar/internal/server/http/handlers"
 	"github.com/Maxim-Ba/hw12_13_14_15_calendar/internal/server/http/middlewares"
 )
@@ -12,14 +14,23 @@ type Logger interface {
 	Infof(format string, args ...interface{})
 }
 
-func NewRouter(logger Logger) http.Handler {
+func NewRouter(logger Logger, app handlers.Application) http.Handler {
 	mux := http.NewServeMux()
 
-	helloHandler := handlers.NewHelloHandler()
-	mux.Handle("/hello", helloHandler)
-	mux.Handle("/", helloHandler)
+	mux.Handle("/hello", handlers.NewHelloHandler())
 
-	handler := middlewares.LoggingMiddleware(logger)(mux)
+	mux.HandleFunc("/openapi.json", func(w http.ResponseWriter, r *http.Request) {
+		swagger, err := generated.GetSwagger()
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(swagger)
+	})
 
-	return handler
+	eventsHandler := handlers.NewEventsHandler(app)
+	generated.HandlerFromMux(eventsHandler, mux)
+
+	return middlewares.LoggingMiddleware(logger)(mux)
 }

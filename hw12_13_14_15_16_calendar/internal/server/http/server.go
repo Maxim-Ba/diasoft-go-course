@@ -4,14 +4,16 @@ import (
 	"context"
 	"net"
 	"net/http"
+	"time"
 
+	"github.com/Maxim-Ba/hw12_13_14_15_calendar/internal/server/http/handlers"
 	"github.com/Maxim-Ba/hw12_13_14_15_calendar/internal/server/http/router"
 )
 
 type Server struct {
 	logger     Logger
 	httpLogger Logger
-	app        Application
+	app        handlers.Application
 	httpServer *http.Server
 	address    string
 }
@@ -23,10 +25,7 @@ type Logger interface {
 	Errorf(format string, args ...interface{})
 }
 
-type Application interface {
-}
-
-func NewServer(logger Logger, httpLogger Logger, app Application, host, port string) *Server {
+func NewServer(logger Logger, httpLogger Logger, app handlers.Application, host, port string) *Server {
 	address := net.JoinHostPort(host, port)
 
 	return &Server{
@@ -38,11 +37,12 @@ func NewServer(logger Logger, httpLogger Logger, app Application, host, port str
 }
 
 func (s *Server) Start(ctx context.Context) error {
-	handler := router.NewRouter(s.httpLogger)
+	handler := router.NewRouter(s.httpLogger, s.app)
 
 	s.httpServer = &http.Server{
-		Addr:    s.address,
-		Handler: handler,
+		Addr:              s.address,
+		Handler:           handler,
+		ReadHeaderTimeout: 5 * time.Second,
 	}
 
 	s.logger.Info("starting HTTP server on " + s.address)

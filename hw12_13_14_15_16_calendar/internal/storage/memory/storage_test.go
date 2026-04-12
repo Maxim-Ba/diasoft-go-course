@@ -225,10 +225,18 @@ func TestGetEventsForDay(t *testing.T) {
 		UserID:    "user-1",
 	}
 
-	s.CreateEvent(ctx, event1)
-	s.CreateEvent(ctx, event2)
-	s.CreateEvent(ctx, event3)
-
+	_, err := s.CreateEvent(ctx, event1)
+	if err != nil {
+		t.Fatalf("Failed to create event 1: %v", err)
+	}
+	_, err = s.CreateEvent(ctx, event2)
+	if err != nil {
+		t.Fatalf("Failed to create event 2: %v", err)
+	}
+	_, err = s.CreateEvent(ctx, event3)
+	if err != nil {
+		t.Fatalf("Failed to create event 3: %v", err)
+	}
 	events, err := s.GetEventsForDay(ctx, today)
 	if err != nil {
 		t.Fatalf("Failed to get events for day: %v", err)
@@ -254,7 +262,10 @@ func TestGetEventsForWeek(t *testing.T) {
 			Duration:  time.Hour,
 			UserID:    "user-1",
 		}
-		s.CreateEvent(ctx, event)
+		_, err := s.CreateEvent(ctx, event)
+		if err != nil {
+			t.Fatalf("Failed to get events for day: %v", err)
+		}
 	}
 
 	eventOutside := storage.Event{
@@ -263,7 +274,10 @@ func TestGetEventsForWeek(t *testing.T) {
 		Duration:  time.Hour,
 		UserID:    "user-1",
 	}
-	s.CreateEvent(ctx, eventOutside)
+	_, err := s.CreateEvent(ctx, eventOutside)
+	if err != nil {
+		t.Fatalf("Failed to get events for day: %v", err)
+	}
 
 	events, err := s.GetEventsForWeek(ctx, today)
 	if err != nil {
@@ -291,7 +305,10 @@ func TestGetEventsForMonth(t *testing.T) {
 			Duration:  time.Hour,
 			UserID:    "user-1",
 		}
-		s.CreateEvent(ctx, event)
+		_, err := s.CreateEvent(ctx, event)
+		if err != nil {
+			t.Fatalf("Failed to get events for day: %v", err)
+		}
 	}
 
 	// событие в следующем месяце
@@ -302,7 +319,10 @@ func TestGetEventsForMonth(t *testing.T) {
 		Duration:  time.Hour,
 		UserID:    "user-1",
 	}
-	s.CreateEvent(ctx, eventOutside)
+	_, err := s.CreateEvent(ctx, eventOutside)
+	if err != nil {
+		t.Fatalf("Failed to get events for day: %v", err)
+	}
 
 	events, err := s.GetEventsForMonth(ctx, startOfMonth)
 	if err != nil {
@@ -431,9 +451,18 @@ func TestGetEventsBetween(t *testing.T) {
 		UserID:    "user-1",
 	}
 
-	s.CreateEvent(ctx, event1)
-	s.CreateEvent(ctx, event2)
-	s.CreateEvent(ctx, event3)
+	_, err := s.CreateEvent(ctx, event1)
+	if err != nil {
+		t.Fatalf("Failed to create event 1: %v", err)
+	}
+	_, err = s.CreateEvent(ctx, event2)
+	if err != nil {
+		t.Fatalf("Failed to create event 2: %v", err)
+	}
+	_, err = s.CreateEvent(ctx, event3)
+	if err != nil {
+		t.Fatalf("Failed to create event 3: %v", err)
+	}
 
 	// получаем события с 10:00 до 14:00 (должны попасть event1 и event2)
 	events := s.GetEventsBetween(start, start.Add(4*time.Hour))
@@ -459,7 +488,10 @@ func TestGetEventsBetweenConcurrent(t *testing.T) {
 			Duration:  30 * time.Minute,
 			UserID:    "user-1",
 		}
-		s.CreateEvent(ctx, event)
+		_, err := s.CreateEvent(ctx, event)
+		if err != nil {
+			t.Fatalf("Failed to create event: %v", err)
+		}
 	}
 
 	var wg sync.WaitGroup
@@ -492,7 +524,10 @@ func TestIsTimeBusy(t *testing.T) {
 		UserID:    "user-1",
 	}
 
-	s.CreateEvent(ctx, existingEvent)
+	_, err := s.CreateEvent(ctx, existingEvent)
+	if err != nil {
+		t.Fatalf("Failed to create event: %v", err)
+	}
 
 	// событие, которое пересекается
 	conflictingEvent := storage.Event{
@@ -546,7 +581,10 @@ func TestIsTimeBusyConcurrent(t *testing.T) {
 		UserID:    "user-1",
 	}
 
-	s.CreateEvent(ctx, event)
+	_, err := s.CreateEvent(ctx, event)
+	if err != nil {
+		t.Fatalf("Failed to create event: %v", err)
+	}
 
 	var wg sync.WaitGroup
 	numGoroutines := 100
@@ -593,8 +631,14 @@ func TestIsTimeBusyExcept(t *testing.T) {
 		UserID:    "user-1",
 	}
 
-	id1, _ := s.CreateEvent(ctx, event1)
-	id2, _ := s.CreateEvent(ctx, event2)
+	id1, err := s.CreateEvent(ctx, event1)
+	if err != nil {
+		t.Fatalf("Failed to create event: %v", err)
+	}
+	id2, err := s.CreateEvent(ctx, event2)
+	if err != nil {
+		t.Fatalf("Failed to create event: %v", err)
+	}
 
 	// обновляем event1 на то же время - не должно быть конфликта с самим собой
 	updatedEvent1 := storage.Event{
@@ -643,7 +687,10 @@ func TestIsTimeBusyExceptConcurrent(t *testing.T) {
 			Duration:  time.Hour,
 			UserID:    "user-1",
 		}
-		id, _ := s.CreateEvent(ctx, event)
+		id, err := s.CreateEvent(ctx, event)
+		if err != nil {
+			t.Fatalf("Failed to create event: %v", err)
+		}
 		ids[i] = id
 	}
 
