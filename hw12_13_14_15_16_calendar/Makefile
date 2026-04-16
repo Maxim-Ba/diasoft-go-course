@@ -1,4 +1,6 @@
 BIN := "./bin/calendar"
+BIN_SCHEDULER := "./bin/calendar_scheduler"
+BIN_STORER := "./bin/calendar_storer"
 DOCKER_IMG="calendar:develop"
 
 GIT_HASH := $(shell git log --format="%h" -n 1)
@@ -11,9 +13,17 @@ generate:
 
 build:
 	go build -v -o $(BIN) -ldflags "$(LDFLAGS)" ./cmd/calendar
+	go build -v -o $(BIN_SCHEDULER) -ldflags "$(LDFLAGS)" ./cmd/calendar_scheduler
+	go build -v -o $(BIN_STORER) -ldflags "$(LDFLAGS)" ./cmd/calendar_storer
 
 run: build
 	$(BIN) --config=./configs/config.yaml
+
+run-scheduler: build
+	$(BIN_SCHEDULER) --config=./configs/scheduler_config.yaml
+
+run-storer: build
+	$(BIN_STORER) --config=./configs/storer_config.yaml
 
 build-img:
 	docker build \
@@ -23,6 +33,15 @@ build-img:
 
 run-img: build-img
 	docker run $(DOCKER_IMG)
+
+up:
+	docker-compose -f deployments/docker-compose.yaml up -d --build
+
+down:
+	docker-compose -f deployments/docker-compose.yaml down
+
+restart:
+	docker-compose -f deployments/docker-compose.yaml restart
 
 version: build
 	$(BIN) version
@@ -39,4 +58,4 @@ deps:
 lint: install-lint-deps deps
 	golangci-lint run ./...
 
-.PHONY: generate build run build-img run-img version test lint deps
+.PHONY: generate build run run-scheduler run-storer build-img run-img version test lint deps up down logs ps restart

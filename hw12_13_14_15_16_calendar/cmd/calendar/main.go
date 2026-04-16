@@ -37,10 +37,16 @@ func main() {
 
 	logg := logger.New(config.Logger.Level)
 
-	httpLogger, err := logger.NewFileLogger("INFO", config.Logger.HTTPLogFile)
-	if err != nil {
-		logg.Error("failed to create HTTP logger: " + err.Error())
-		os.Exit(1)
+	var httpLogger *logger.Logger
+	if config.Logger.HTTPLogFile != "" {
+		var err error
+		httpLogger, err = logger.NewFileLogger("INFO", config.Logger.HTTPLogFile)
+		if err != nil {
+			logg.Error("failed to create HTTP logger: " + err.Error())
+			os.Exit(1)
+		}
+	} else {
+		httpLogger = logger.New("INFO")
 	}
 
 	var storage interface {

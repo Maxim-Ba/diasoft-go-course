@@ -11,4 +11,5 @@ type Event struct {
 	Description      string        // описание события - длинный текст, опционально.
 	UserID           string        // ID пользователя, владельца события.
 	NotificationTime time.Duration // за сколько времени высылать уведомление, опционально.
+	NotifiedAt       *time.Time    // время отправки уведомления, nil если ещё не отправлено.
 }
