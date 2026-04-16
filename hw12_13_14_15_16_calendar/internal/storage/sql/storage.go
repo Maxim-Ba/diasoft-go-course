@@ -25,6 +25,8 @@ type dbEvent struct {
 	Description      sql.NullString `db:"description"`
 	UserID           string         `db:"user_id"`
 	NotificationTime sql.NullInt64  `db:"notification_time"`
+	CreatedAt        time.Time      `db:"created_at"`
+	UpdatedAt        time.Time      `db:"updated_at"`
 }
 
 func New(dsn string) (*Storage, error) {
@@ -252,6 +254,44 @@ func (s *Storage) checkTimeBusy(ctx context.Context, event storage.Event) error 
 
 	if count > 0 {
 		return storage.ErrDateBusy
+	}
+
+	return nil
+}
+
+func (s *Storage) ListEvents(ctx context.Context, from, to time.Time) ([]storage.Event, error) {
+	var dbEvents []dbEvent
+
+	query := `
+		SELECT * FROM events 
+		WHERE start_time >= $1 AND start_time <= $2
+		ORDER BY start_time
+	`
+
+	err := s.db.SelectContext(ctx, &dbEvents, query, from, to)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list events: %w", err)
+	}
+
+	events := make([]storage.Event, 0, len(dbEvents))
+	for _, dbe := range dbEvents {
+		events = append(events, fromDBEvent(dbe))
+	}
+
+	return events, nil
+}
+
+func (s *Storage) SaveNotification(ctx context.Context, notification storage.Notification) error {
+	query := `
+		INSERT INTO notifications (event_id, title, event_date, user_id, created_at)
+		VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP)
+	`
+
+	_, err := s.db.ExecContext(ctx, query,
+		notification.EventID, notification.Title, notification.EventDate, notification.UserID,
+	)
+	if err != nil {
+		return fmt.Errorf("failed to save notification: %w", err)
 	}
 
 	return nil
