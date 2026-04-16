@@ -25,6 +25,7 @@ type dbEvent struct {
 	Description      sql.NullString `db:"description"`
 	UserID           string         `db:"user_id"`
 	NotificationTime sql.NullInt64  `db:"notification_time"`
+	NotifiedAt       sql.NullTime   `db:"notified_at"`
 	CreatedAt        time.Time      `db:"created_at"`
 	UpdatedAt        time.Time      `db:"updated_at"`
 }
@@ -85,6 +86,11 @@ func fromDBEvent(dbe dbEvent) storage.Event {
 
 	if dbe.NotificationTime.Valid {
 		e.NotificationTime = time.Duration(dbe.NotificationTime.Int64)
+	}
+
+	if dbe.NotifiedAt.Valid {
+		t := dbe.NotifiedAt.Time
+		e.NotifiedAt = &t
 	}
 
 	return e
@@ -279,6 +285,14 @@ func (s *Storage) ListEvents(ctx context.Context, from, to time.Time) ([]storage
 	}
 
 	return events, nil
+}
+
+func (s *Storage) MarkEventNotified(ctx context.Context, id string) error {
+	_, err := s.db.ExecContext(ctx, "UPDATE events SET notified_at = NOW() WHERE id = $1", id)
+	if err != nil {
+		return fmt.Errorf("failed to mark event as notified: %w", err)
+	}
+	return nil
 }
 
 func (s *Storage) SaveNotification(ctx context.Context, notification storage.Notification) error {

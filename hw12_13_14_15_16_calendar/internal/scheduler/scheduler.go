@@ -13,6 +13,7 @@ import (
 type EventStorage interface {
 	ListEvents(ctx context.Context, from, to time.Time) ([]storage.Event, error)
 	DeleteEvent(ctx context.Context, id string) error
+	MarkEventNotified(ctx context.Context, id string) error
 }
 
 type Logger interface {
@@ -50,11 +51,18 @@ func (s *Scheduler) ScanAndNotify(ctx context.Context) error {
 			continue
 		}
 
+		if event.NotifiedAt != nil {
+			continue
+		}
+
 		notifyAt := event.StartTime.Add(-event.NotificationTime)
 		if notifyAt.After(now) && notifyAt.Before(now.Add(time.Hour)) {
 			if err := s.sendNotification(ctx, event); err != nil {
 				s.logger.Error(fmt.Sprintf("failed to send notification for event %s: %v", event.ID, err))
 				continue
+			}
+			if err := s.storage.MarkEventNotified(ctx, event.ID); err != nil {
+				s.logger.Error(fmt.Sprintf("failed to mark event %s as notified: %v", event.ID, err))
 			}
 			s.logger.Info(fmt.Sprintf("notification sent for event %s", event.ID))
 		}
