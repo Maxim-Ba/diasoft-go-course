@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+	"os"
+	"strings"
 
 	"github.com/spf13/viper"
 )
@@ -48,6 +50,13 @@ func NewConfig(configPath string) (*Config, error) {
 	var config Config
 	if err := v.Unmarshal(&config); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal config: %w", err)
+	}
+
+	if dsn := os.Getenv("DATABASE_DSN"); dsn != "" {
+		config.Database.DSN = dsn
+	}
+	if brokers := os.Getenv("KAFKA_BROKERS"); brokers != "" {
+		config.Kafka.Brokers = strings.Split(brokers, ",")
 	}
 
 	return &config, nil

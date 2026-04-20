@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/spf13/viper"
 )
@@ -48,6 +49,10 @@ func NewConfig(configPath string) (*Config, error) {
 	var config Config
 	if err := v.Unmarshal(&config); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal config: %w", err)
+	}
+
+	if dsn := os.Getenv("DATABASE_DSN"); dsn != "" {
+		config.Database.DSN = dsn
 	}
 
 	return &config, nil
