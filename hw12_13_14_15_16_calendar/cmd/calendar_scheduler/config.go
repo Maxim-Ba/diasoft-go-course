@@ -58,6 +58,9 @@ func NewConfig(configPath string) (*Config, error) {
 	if brokers := os.Getenv("KAFKA_BROKERS"); brokers != "" {
 		config.Kafka.Brokers = strings.Split(brokers, ",")
 	}
+	if interval := os.Getenv("SCAN_INTERVAL"); interval != "" {
+		config.Schedule.ScanInterval = interval
+	}
 
 	return &config, nil
 }

@@ -1,0 +1,118 @@
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: it_postgres
+    environment:
+      POSTGRES_DB: calendar
+      POSTGRES_USER: calendar
+      POSTGRES_PASSWORD: calendar
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U calendar" ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - it_network
+
+  kafka:
+    image: apache/kafka:3.7.0
+    container_name: it_kafka
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_NUM_PARTITIONS: 3
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      CLUSTER_ID: MkU3OEVBNTcwNTJENDM2Qk
+    healthcheck:
+      test: [ "CMD-SHELL", "nc -z localhost 9092 || exit 1" ]
+      interval: 5s
+      timeout: 5s
+      retries: 15
+      start_period: 30s
+    networks:
+      - it_network
+
+  calendar:
+    build:
+      context: ..
+      dockerfile: build/Dockerfile
+    container_name: it_calendar
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      - DATABASE_DSN=postgres://calendar:calendar@postgres:5432/calendar?sslmode=disable
+    healthcheck:
+      test: [ "CMD-SHELL", "wget -qO- http://localhost:8082/events/day?date=2000-01-01 || exit 1" ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+    networks:
+      - it_network
+
+  calendar_scheduler:
+    build:
+      context: ..
+      dockerfile: build/Dockerfile.scheduler
+    container_name: it_scheduler
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    environment:
+      - DATABASE_DSN=postgres://calendar:calendar@postgres:5432/calendar?sslmode=disable
+      - KAFKA_BROKERS=kafka:9092
+      - SCAN_INTERVAL=5s
+    networks:
+      - it_network
+    restart: unless-stopped
+
+  calendar_storer:
+    build:
+      context: ..
+      dockerfile: build/Dockerfile.storer
+    container_name: it_storer
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    environment:
+      - DATABASE_DSN=postgres://calendar:calendar@postgres:5432/calendar?sslmode=disable
+      - KAFKA_BROKERS=kafka:9092
+    networks:
+      - it_network
+    restart: unless-stopped
+
+  integration-tests:
+    build:
+      context: ..
+      dockerfile: build/Dockerfile.integration
+    container_name: it_tests
+    depends_on:
+      calendar:
+        condition: service_healthy
+      calendar_scheduler:
+        condition: service_started
+      calendar_storer:
+        condition: service_started
+    environment:
+      - CALENDAR_URL=http://calendar:8082
+      - DATABASE_DSN=postgres://calendar:calendar@postgres:5432/calendar?sslmode=disable
+    networks:
+      - it_network
+
+networks:
+  it_network:
+    driver: bridge
