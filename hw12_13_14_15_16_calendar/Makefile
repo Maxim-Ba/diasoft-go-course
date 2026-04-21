@@ -49,6 +49,14 @@ version: build
 test:
 	go test -race ./internal/...
 
+integration-tests:
+	docker-compose -f deployments/docker-compose.integration.yaml up \
+		--build --abort-on-container-exit \
+		--exit-code-from integration-tests; \
+	EXIT_CODE=$$?; \
+	docker-compose -f deployments/docker-compose.integration.yaml down -v; \
+	exit $$EXIT_CODE
+
 install-lint-deps:
 	(which golangci-lint > /dev/null) || curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(shell go env GOPATH)/bin latest
 
@@ -58,4 +66,4 @@ deps:
 lint: install-lint-deps deps
 	golangci-lint run ./...
 
-.PHONY: generate build run run-scheduler run-storer build-img run-img version test lint deps up down logs ps restart
+.PHONY: generate build run run-scheduler run-storer build-img run-img version test integration-tests lint deps up down logs ps restart

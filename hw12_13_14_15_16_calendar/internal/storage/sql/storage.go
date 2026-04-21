@@ -247,7 +247,7 @@ func (s *Storage) checkTimeBusy(ctx context.Context, event storage.Event) error 
 		WHERE user_id = $1 
 		  AND id != $2
 		  AND start_time < $3 
-		  AND (start_time + duration * INTERVAL '1 nanosecond') > $4
+		  AND (start_time + make_interval(secs => duration::double precision / 1000000000.0)) > $4
 	`
 
 	var count int
