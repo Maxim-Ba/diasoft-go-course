@@ -48,7 +48,8 @@ func (s *CalendarSuite) SetupSuite() {
 
 func (s *CalendarSuite) TearDownSuite() {
 	if s.db != nil {
-		s.db.Close()
+		err := s.db.Close()
+		fmt.Printf("while connection close: %v", err)
 	}
 }
 
@@ -66,7 +67,10 @@ func (s *CalendarSuite) post(path string, body interface{}) (int, []byte) {
 
 	resp, err := s.client.Post(s.baseURL+path, "application/json", bytes.NewReader(data))
 	s.Require().NoError(err)
-	defer resp.Body.Close()
+	defer func() {
+		err = resp.Body.Close()
+		fmt.Printf("while body close: %v", err)
+	}()
 
 	respBody, err := io.ReadAll(resp.Body)
 	s.Require().NoError(err)
@@ -84,7 +88,10 @@ func (s *CalendarSuite) put(path string, body interface{}) (int, []byte) {
 
 	resp, err := s.client.Do(req)
 	s.Require().NoError(err)
-	defer resp.Body.Close()
+	defer func() {
+		err = resp.Body.Close()
+		fmt.Printf("while body close: %v", err)
+	}()
 
 	respBody, err := io.ReadAll(resp.Body)
 	s.Require().NoError(err)
@@ -98,7 +105,10 @@ func (s *CalendarSuite) delete(path string) (int, []byte) {
 
 	resp, err := s.client.Do(req)
 	s.Require().NoError(err)
-	defer resp.Body.Close()
+	defer func() {
+		err = resp.Body.Close()
+		fmt.Printf("while body close: %v", err)
+	}()
 
 	respBody, err := io.ReadAll(resp.Body)
 	s.Require().NoError(err)
@@ -109,7 +119,10 @@ func (s *CalendarSuite) delete(path string) (int, []byte) {
 func (s *CalendarSuite) get(path string) (int, []byte) {
 	resp, err := s.client.Get(s.baseURL + path)
 	s.Require().NoError(err)
-	defer resp.Body.Close()
+	defer func() {
+		err = resp.Body.Close()
+		fmt.Printf("while body close: %v", err)
+	}()
 
 	respBody, err := io.ReadAll(resp.Body)
 	s.Require().NoError(err)
@@ -160,7 +173,8 @@ func TestMain(m *testing.M) {
 	for time.Now().Before(deadline) {
 		resp, err := client.Get(url)
 		if err == nil {
-			resp.Body.Close()
+			err = resp.Body.Close()
+			fmt.Printf("while body close: %v", err)
 			break
 		}
 		time.Sleep(time.Second)
