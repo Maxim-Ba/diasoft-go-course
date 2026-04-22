@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/Maxim-Ba/hw12_13_14_15_calendar/internal/metrics"
 	"github.com/Maxim-Ba/hw12_13_14_15_calendar/internal/queue"
 	"github.com/Maxim-Ba/hw12_13_14_15_calendar/internal/storage"
 )
@@ -58,16 +59,19 @@ func (s *Scheduler) ScanAndNotify(ctx context.Context) error {
 		notifyAt := event.StartTime.Add(-event.NotificationTime)
 		if notifyAt.After(now) && notifyAt.Before(now.Add(time.Hour)) {
 			if err := s.sendNotification(ctx, event); err != nil {
+				metrics.SchedulerNotificationsErrorsTotal.Inc()
 				s.logger.Error(fmt.Sprintf("failed to send notification for event %s: %v", event.ID, err))
 				continue
 			}
 			if err := s.storage.MarkEventNotified(ctx, event.ID); err != nil {
 				s.logger.Error(fmt.Sprintf("failed to mark event %s as notified: %v", event.ID, err))
 			}
+			metrics.SchedulerNotificationsSentTotal.Inc()
 			s.logger.Info(fmt.Sprintf("notification sent for event %s", event.ID))
 		}
 	}
 
+	metrics.SchedulerLastRunTimestamp.SetToCurrentTime()
 	return nil
 }
 
@@ -83,6 +87,7 @@ func (s *Scheduler) CleanupOldEvents(ctx context.Context) error {
 			s.logger.Error(fmt.Sprintf("failed to delete event %s: %v", event.ID, err))
 			continue
 		}
+		metrics.SchedulerCleanupsTotal.Inc()
 		s.logger.Info(fmt.Sprintf("deleted old event %s", event.ID))
 	}
 
