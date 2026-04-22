@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/Maxim-Ba/hw12_13_14_15_calendar/internal/metrics"
 	"github.com/Maxim-Ba/hw12_13_14_15_calendar/internal/storage"
 )
 
@@ -42,6 +43,7 @@ func (a *App) CreateEvent(ctx context.Context, event storage.Event) (string, err
 		a.logger.Errorf("failed to create event: %v", err)
 		return "", err
 	}
+	metrics.EventsCreatedTotal.Inc()
 	a.logger.Infof("event created: id=%s", id)
 	return id, nil
 }
@@ -51,6 +53,7 @@ func (a *App) UpdateEvent(ctx context.Context, id string, event storage.Event) e
 		a.logger.Errorf("failed to update event id=%s: %v", id, err)
 		return err
 	}
+	metrics.EventsUpdatedTotal.Inc()
 	a.logger.Infof("event updated: id=%s", id)
 	return nil
 }
@@ -60,6 +63,7 @@ func (a *App) DeleteEvent(ctx context.Context, id string) error {
 		a.logger.Errorf("failed to delete event id=%s: %v", id, err)
 		return err
 	}
+	metrics.EventsDeletedTotal.Inc()
 	a.logger.Infof("event deleted: id=%s", id)
 	return nil
 }
@@ -79,6 +83,7 @@ func (a *App) GetEventsForDay(ctx context.Context, date time.Time) ([]storage.Ev
 		a.logger.Errorf("failed to get events for day %s: %v", date.Format("2006-01-02"), err)
 		return nil, err
 	}
+	metrics.EventsFetchedTotal.WithLabelValues("day").Inc()
 	return events, nil
 }
 
@@ -88,6 +93,7 @@ func (a *App) GetEventsForWeek(ctx context.Context, startDate time.Time) ([]stor
 		a.logger.Errorf("failed to get events for week %s: %v", startDate.Format("2006-01-02"), err)
 		return nil, err
 	}
+	metrics.EventsFetchedTotal.WithLabelValues("week").Inc()
 	return events, nil
 }
 
@@ -97,5 +103,6 @@ func (a *App) GetEventsForMonth(ctx context.Context, startDate time.Time) ([]sto
 		a.logger.Errorf("failed to get events for month %s: %v", startDate.Format("2006-01-02"), err)
 		return nil, err
 	}
+	metrics.EventsFetchedTotal.WithLabelValues("month").Inc()
 	return events, nil
 }
